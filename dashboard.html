@@ -45,9 +45,13 @@
                     <!-- Dropdown Menu -->
                     <div class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-right group-hover:translate-y-0 translate-y-2 z-50">
                         <div class="py-2 flex flex-col">
-                            <a href="dashboard.html" class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 transition-colors bg-gray-50 text-indigo-600" style="text-decoration:none;">
+                            <a href="dashboard.html" class="flex items-center gap-3 px-4 py-2 text-sm text-indigo-600 bg-gray-50 transition-colors font-medium" style="text-decoration:none;">
                                 <span class="material-symbols-outlined text-[20px]">dashboard</span>
                                 Dashboard
+                            </a>
+                            <a href="profile.html" class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 transition-colors" style="text-decoration:none;">
+                                <span class="material-symbols-outlined text-[20px]">person</span>
+                                Profile & Settings
                             </a>
                             <div class="h-[1px] bg-gray-100 my-1 mx-4"></div>
                             <button onclick="logoutUser()" class="flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors w-full text-left">
@@ -78,46 +82,6 @@
                 
                 <!-- Left Column: Default Settings -->
                 <div class="lg:col-span-4 flex flex-col gap-6" id="settings">
-                    <div class="bg-white rounded-3xl p-6 md:p-8 flex flex-col gap-6 shadow-sm border border-gray-200">
-                        <div class="flex items-center gap-3 mb-1">
-                            <span class="material-symbols-outlined text-indigo-600 text-[26px]">settings</span>
-                            <h2 class="text-xl font-bold text-gray-900">Default Settings</h2>
-                        </div>
-                        <p class="text-sm text-gray-500">These details will automatically pre-fill when you create a new quote.</p>
-                        
-                        <form id="settings-form" class="flex flex-col gap-5">
-                            <div class="flex flex-col gap-1.5">
-                                <label class="text-xs font-bold text-gray-700 uppercase tracking-wider">Your Company Name</label>
-                                <input type="text" id="set-company-name" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all outline-none" placeholder="e.g. QuoteFlow AI Inc.">
-                            </div>
-                            
-                            <div class="flex flex-col gap-1.5">
-                                <label class="text-xs font-bold text-gray-700 uppercase tracking-wider">Your Address</label>
-                                <textarea id="set-company-address" rows="3" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all outline-none resize-none" placeholder="123 Innovation Drive..."></textarea>
-                            </div>
-                            
-                            <div class="flex flex-col gap-1.5">
-                                <label class="text-xs font-bold text-gray-700 uppercase tracking-wider">Your Email</label>
-                                <input type="email" id="set-company-email" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all outline-none" placeholder="support@example.com">
-                            </div>
-                            
-                            <div class="flex flex-col gap-1.5">
-                                <label class="text-xs font-bold text-gray-700 uppercase tracking-wider">Your Phone / Contact</label>
-                                <input type="text" id="set-company-phone" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all outline-none" placeholder="+91 98765 43210">
-                            </div>
-                            
-                            <div class="flex flex-col gap-1.5">
-                                <label class="text-xs font-bold text-gray-700 uppercase tracking-wider">GSTIN / Tax ID</label>
-                                <input type="text" id="set-company-gstin" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all outline-none" placeholder="27XXXXX1234X1ZX">
-                            </div>
-
-                            <button type="submit" id="save-settings-btn" class="mt-2 h-12 w-full rounded-xl bg-indigo-600 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-indigo-700 active:scale-95 transition-all shadow-md">
-                                <span class="material-symbols-outlined text-[20px]">save</span>
-                                Save Settings
-                            </button>
-                        </form>
-                    </div>
-
                     <!-- Product & Service Catalog -->
                     <div class="bg-white rounded-3xl p-6 md:p-8 flex flex-col gap-6 shadow-sm border border-gray-200">
                         <div class="flex items-center justify-between mb-1">
@@ -223,49 +187,6 @@
                 maximumFractionDigits: 0
             }).format(amount).replace(/[a-zA-Z]+/, '').trim().replace(/^[^0-9]+/, symbol);
         };
-
-        // Load Settings
-        const loadSettings = async () => {
-            if (window.getUserSettings) {
-                const settings = await window.getUserSettings();
-                if (settings) {
-                    document.getElementById('set-company-name').value = settings.companyName || '';
-                    document.getElementById('set-company-address').value = settings.address || '';
-                    document.getElementById('set-company-email').value = settings.email || '';
-                    document.getElementById('set-company-phone').value = settings.phone || '';
-                    document.getElementById('set-company-gstin').value = settings.gstin || '';
-                }
-            }
-        };
-
-        // Save Settings
-        document.getElementById('settings-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('save-settings-btn');
-            const orig = btn.innerHTML;
-            btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-[20px]">refresh</span> Saving...`;
-            btn.disabled = true;
-
-            const settings = {
-                companyName: document.getElementById('set-company-name').value,
-                address: document.getElementById('set-company-address').value,
-                email: document.getElementById('set-company-email').value,
-                phone: document.getElementById('set-company-phone').value,
-                gstin: document.getElementById('set-company-gstin').value
-            };
-
-            if (window.saveUserSettings) {
-                const success = await window.saveUserSettings(settings);
-                if (success) {
-                    showToast('Settings saved successfully!');
-                } else {
-                    showToast('Failed to save settings.', 'error');
-                }
-            }
-            
-            btn.innerHTML = orig;
-            btn.disabled = false;
-        });
 
         // Load Quotes
         const loadQuotes = async () => {
@@ -498,10 +419,9 @@
         });
 
         // Initialize when Auth state is ready
-        auth.onAuthStateChanged(user => {
+        auth.onAuthStateChanged(async user => {
             if (user) {
-                loadSettings();
-                loadQuotes();
+                await loadQuotes();
                 loadCatalog();
             }
         });
