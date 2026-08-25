@@ -1,4 +1,8 @@
 {
+  "name": "quoteflow",
+  "scripts": {
+    "start": "node local-server.js"
+  },
   "dependencies": {
     "jsdom": "^30.0.1",
     "pdf-lib": "^1.17.1",

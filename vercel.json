@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/QuoteFlow_AI_Quotation_Builder.html"
+    }
+  ]
+}
