@@ -15,8 +15,18 @@ onAuthStateChanged(auth, (user) => {
         
         // Update user profile picture in header if it exists
         const profileImage = document.getElementById('user-profile-img');
-        if (profileImage && user.photoURL) {
-            profileImage.src = user.photoURL;
+        if (profileImage) {
+            if (user.photoURL) {
+                profileImage.src = user.photoURL;
+            }
+            
+            // Firebase Auth caches the photoURL. If it was updated recently, 
+            // the cache might still have the old one. We silently reload the user to get the latest.
+            user.reload().then(() => {
+                if (auth.currentUser && auth.currentUser.photoURL) {
+                    profileImage.src = auth.currentUser.photoURL;
+                }
+            }).catch(e => console.error("Profile reload failed", e));
         }
 
     } else {
