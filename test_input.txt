@@ -1,0 +1,40 @@
+Dear Mr. Arjun Mehta,
+
+Please find below the sample quotation and inventory details for your review.
+
+**Customer Details**
+Company: BlueWave Retail Solutions Pvt. Ltd.
+Address: 42 Lakeview Avenue, Andheri East, Mumbai, Maharashtra – 400069
+Phone: +91 90000 12345
+Email: arjun@example.test
+
+**Quotation Details**
+
+| Product           | Quantity | Unit Price |   Total |
+| ----------------- | -------: | ---------: | ------: |
+| Wireless Keyboard |       10 |     ₹1,250 | ₹12,500 |
+| Wireless Mouse    |       15 |       ₹750 | ₹11,250 |
+| USB-C Hub         |        8 |     ₹1,800 | ₹14,400 |
+| Laptop Stand      |       12 |     ₹1,100 | ₹13,200 |
+
+**Subtotal:** ₹51,350
+**GST (18%):** ₹9,243
+**Grand Total:** ₹60,593
+
+**Delivery Address**
+BlueWave Retail Solutions Pvt. Ltd.
+42 Lakeview Avenue
+Andheri East
+Mumbai, Maharashtra – 400069
+India
+
+**Inventory Status:** All listed items are currently shown as **In Stock** for this sample quotation.
+
+Please note that all names, contact details, prices, and inventory information above are **fictional and intended only for testing/study purposes**.
+
+Best regards,
+Rahul Sharma
+Sample Sales Department
+DemoTech Supplies Pvt. Ltd.
+Phone: +91 90000 67890
+Email: sales@example.test
