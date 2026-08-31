@@ -63,6 +63,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
+        // Clear state on fresh start or reload of Step 1
+        if (window.location.pathname.includes('QuoteFlow_AI_Quotation_Builder.html') || window.location.pathname === '/' || window.location.pathname === '') {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // Check if it's a page reload
+            const navigationEntries = performance.getEntriesByType("navigation");
+            const isReload = navigationEntries.length > 0 && navigationEntries[0].type === "reload";
+
+            // If it's a reload OR not explicitly in edit mode, clear the state
+            if (isReload || !urlParams.has('edit')) {
+                localStorage.removeItem(STORAGE_KEY);
+                return defaultState;
+            }
+        }
+
         const stored = localStorage.getItem(STORAGE_KEY);
         return stored ? JSON.parse(stored) : defaultState;
     };
@@ -629,16 +644,19 @@ ${textarea.value}`;
 
         const updateStateFromDOM = () => {
             // Customer Info
-            const inputs = document.querySelectorAll('section:nth-of-type(1) input');
-            if(inputs.length >= 5) {
-                currentState.customerInfo.companyName = inputs[0].value;
-                currentState.customerInfo.contactPerson = inputs[1].value;
-                currentState.customerInfo.email = inputs[2].value;
-                currentState.customerInfo.phone = inputs[3].value;
-                currentState.customerInfo.gstin = inputs[4].value;
-            }
-            const billingAddress = document.querySelector('section:nth-of-type(1) textarea');
-            if(billingAddress) currentState.customerInfo.billingAddress = billingAddress.value;
+            const compName = document.getElementById('client-company-name');
+            const contactName = document.getElementById('client-contact-person');
+            const email = document.getElementById('client-email');
+            const phone = document.getElementById('client-phone');
+            const gstin = document.getElementById('client-gstin');
+            const billingAddress = document.getElementById('client-address');
+            
+            if (compName) currentState.customerInfo.companyName = compName.value;
+            if (contactName) currentState.customerInfo.contactPerson = contactName.value;
+            if (email) currentState.customerInfo.email = email.value;
+            if (phone) currentState.customerInfo.phone = phone.value;
+            if (gstin) currentState.customerInfo.gstin = gstin.value;
+            if (billingAddress) currentState.customerInfo.billingAddress = billingAddress.value;
 
             // Quotation Info
             const qInputs = document.querySelectorAll('.sticky section:nth-of-type(1) input');
@@ -778,16 +796,51 @@ ${textarea.value}`;
         // Populate DOM from state
         const populateStep2 = () => {
             // Customer Info
-            const inputs = document.querySelectorAll('section:nth-of-type(1) input');
-            if(inputs.length >= 5) {
-                inputs[0].value = currentState.customerInfo.companyName || '';
-                inputs[1].value = currentState.customerInfo.contactPerson || '';
-                inputs[2].value = currentState.customerInfo.email || '';
-                inputs[3].value = currentState.customerInfo.phone || '';
-                inputs[4].value = currentState.customerInfo.gstin || '';
-            }
-            const billingAddress = document.querySelector('section:nth-of-type(1) textarea');
+            const compName = document.getElementById('client-company-name');
+            const contactName = document.getElementById('client-contact-person');
+            const email = document.getElementById('client-email');
+            const phone = document.getElementById('client-phone');
+            const gstin = document.getElementById('client-gstin');
+            const billingAddress = document.getElementById('client-address');
+
+            if(compName) compName.value = currentState.customerInfo.companyName || '';
+            if(contactName) contactName.value = currentState.customerInfo.contactPerson || '';
+            if(email) email.value = currentState.customerInfo.email || '';
+            if(phone) phone.value = currentState.customerInfo.phone || '';
+            if(gstin) gstin.value = currentState.customerInfo.gstin || '';
             if(billingAddress) billingAddress.value = currentState.customerInfo.billingAddress || '';
+
+            // Load clients for auto-fill dropdown
+            if (compName && window.getUserClients) {
+                const datalist = document.getElementById('client-list');
+                const loadClients = async (retries = 3) => {
+                    const clients = await window.getUserClients();
+                    if (clients && clients.length > 0) {
+                        datalist.innerHTML = '';
+                        clients.forEach(client => {
+                            const option = document.createElement('option');
+                            option.value = client.companyName;
+                            datalist.appendChild(option);
+                        });
+
+                        // Bind auto-fill logic
+                        compName.addEventListener('change', (e) => {
+                            const selected = clients.find(c => c.companyName === e.target.value);
+                            if (selected) {
+                                if(contactName && selected.contactPerson) contactName.value = selected.contactPerson;
+                                if(email && selected.email) email.value = selected.email;
+                                if(phone && selected.phone) phone.value = selected.phone;
+                                if(gstin && selected.gstin) gstin.value = selected.gstin;
+                                if(billingAddress && selected.billingAddress) billingAddress.value = selected.billingAddress;
+                                showToast('Client details auto-filled!');
+                            }
+                        });
+                    } else if (retries > 0) {
+                        setTimeout(() => loadClients(retries - 1), 1000);
+                    }
+                };
+                loadClients();
+            }
 
             // Quotation Info
             const qInputs = document.querySelectorAll('.sticky section:nth-of-type(1) input');
@@ -973,8 +1026,13 @@ ${textarea.value}`;
         // Save Draft
         const saveDraftBtn = Array.from(document.querySelectorAll('button')).find(btn => btn.textContent.includes('Save Draft'));
         if (saveDraftBtn) {
-            saveDraftBtn.addEventListener('click', () => {
+            saveDraftBtn.addEventListener('click', async () => {
                 updateStateFromDOM();
+                
+                if (window.saveClient && currentState.customerInfo.companyName) {
+                    await window.saveClient(currentState.customerInfo);
+                }
+
                 const originalText = saveDraftBtn.innerHTML;
                 saveDraftBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">check</span> Saved!';
                 showToast('Draft saved successfully!', 'save');
@@ -987,9 +1045,15 @@ ${textarea.value}`;
         // Continue to Summary
         const continueBtn = Array.from(document.querySelectorAll('a')).find(a => a.textContent.includes('Continue to Summary'));
         if (continueBtn) {
-            continueBtn.addEventListener('click', (e) => {
+            continueBtn.addEventListener('click', async (e) => {
                 e.preventDefault();
                 updateStateFromDOM();
+                
+                // Save client details for future auto-fill
+                if (window.saveClient && currentState.customerInfo.companyName) {
+                    await window.saveClient(currentState.customerInfo);
+                }
+
                 window.location.href = continueBtn.href;
             });
         }
@@ -1000,7 +1064,7 @@ ${textarea.value}`;
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
                 updateStateFromDOM();
-                window.location.href = 'QuoteFlow_AI_Quotation_Builder.html';
+                window.location.href = 'QuoteFlow_AI_Quotation_Builder.html?edit=true';
             });
         });
 

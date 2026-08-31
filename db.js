@@ -184,3 +184,45 @@ window.deleteCatalogItem = async (itemId) => {
         return false;
     }
 };
+
+window.saveClient = async (clientData) => {
+    try {
+        const user = auth.currentUser;
+        if (!user || !clientData.companyName) return false;
+
+        const clientsRef = collection(db, "users", user.uid, "clients");
+        // Use companyName as a unique-ish way to query or just use the sanitized name as ID
+        // To keep it simple, we use the company name in lowercase, stripped of weird characters as the doc ID
+        const docId = clientData.companyName.toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (!docId) return false;
+
+        const docRef = doc(db, "users", user.uid, "clients", docId);
+        await setDoc(docRef, {
+            ...clientData,
+            updatedAt: new Date()
+        }, { merge: true });
+        return true;
+    } catch (e) {
+        console.error("Error saving client details: ", e);
+        return false;
+    }
+};
+
+window.getUserClients = async () => {
+    try {
+        const user = auth.currentUser;
+        if (!user) return [];
+
+        const clientsRef = collection(db, "users", user.uid, "clients");
+        const querySnapshot = await getDocs(clientsRef);
+        
+        const clients = [];
+        querySnapshot.forEach((doc) => {
+            clients.push({ id: doc.id, ...doc.data() });
+        });
+        return clients;
+    } catch (e) {
+        console.error("Error getting clients: ", e);
+        return [];
+    }
+};

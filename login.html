@@ -4,12 +4,14 @@
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>Login - QuoteFlow AI</title>
+    <meta name="description" content="Login to QuoteFlow AI to access your dashboard.">
+    <link rel="icon" type="image/x-icon" href="https://lh3.googleusercontent.com/aida-public/AB6AXuBz88-rWElaCZjsu-m4MYaSbNIzgb7I4UdKXGY-SrIoPFYn-sbIrIN2wEW29eZYPe-4X3mKwae_fSL_Xezd8mzvh2MKQiGIe8kkjo0yIZCFWe71SBmJtV2wqklTJbw7Rw-cjhf3oP58OXckVW3gQsuw0Q7O6t2CTlKIPuhPbd7hJCpYKhKWwpYccmmE0Aa4O68pERbuUGaS37Gd8BgQjDqab4TGQVoc1iVp9E0wD4TWnL8TakhjkUh_F9AR-wJkKm2w1A">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="tailwind-theme.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="bg-gray-50 font-body-md text-gray-900 min-h-screen flex items-center justify-center p-4">
+<body class="bg-gray-50 font-body-md text-gray-900 min-h-screen flex items-center justify-center p-4 overflow-x-hidden">
 
     <div class="w-full max-w-md bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden relative">
         <div class="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-bl-full -mr-16 -mt-16 transition-transform duration-500 hover:scale-110"></div>
@@ -86,7 +88,8 @@
                 toggleBtn.textContent = "Sign Up";
                 toggleBtn.previousSibling.textContent = "Don't have an account? ";
             }
-            errorMsg.classList.add('hidden');
+            errorMsg.classList.remove('text-green-600', 'bg-green-50', 'border-green-200');
+            errorMsg.classList.add('text-red-600', 'bg-red-50', 'border-red-100', 'hidden');
         });
 
         form.addEventListener('submit', async (e) => {
@@ -94,16 +97,23 @@
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             
-            errorMsg.classList.add('hidden');
+            errorMsg.classList.remove('text-green-600', 'bg-green-50', 'border-green-200');
+            errorMsg.classList.add('text-red-600', 'bg-red-50', 'border-red-100', 'hidden');
             submitBtn.disabled = true;
             submitBtn.style.opacity = '0.7';
 
             try {
                 if (isSignUp) {
                     await createUserWithEmailAndPassword(auth, email, password);
+                    errorMsg.textContent = "Account created successfully! Redirecting...";
                 } else {
                     await signInWithEmailAndPassword(auth, email, password);
+                    errorMsg.textContent = "Login successful! Redirecting...";
                 }
+                
+                errorMsg.classList.remove('hidden', 'text-red-600', 'bg-red-50', 'border-red-100');
+                errorMsg.classList.add('text-green-600', 'bg-green-50', 'border-green-200');
+                
                 // Redirect will be handled automatically by auth.js onAuthStateChanged
             } catch (error) {
                 errorMsg.textContent = error.message.replace('Firebase: ', '');

@@ -13,21 +13,28 @@ onAuthStateChanged(auth, (user) => {
             window.location.href = 'QuoteFlow_AI_Quotation_Builder.html';
         }
         
-        // Update user profile picture in header if it exists
-        const profileImage = document.getElementById('user-profile-img');
-        if (profileImage) {
-            if (user.photoURL) {
-                profileImage.src = user.photoURL;
+        // Update user profile picture in header and main profile if it exists
+        const updateProfileImages = (url) => {
+            document.querySelectorAll('#user-profile-img, #main-profile-img').forEach(img => {
+                img.src = url;
+            });
+        };
+
+        const getProfileUrl = (userObj) => {
+            if (userObj.photoURL) return userObj.photoURL;
+            const name = userObj.displayName || userObj.email || 'User';
+            return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6366f1&color=fff&size=128&bold=true`;
+        };
+
+        updateProfileImages(getProfileUrl(user));
+        
+        // Firebase Auth caches the photoURL. If it was updated recently, 
+        // the cache might still have the old one. We silently reload the user to get the latest.
+        user.reload().then(() => {
+            if (auth.currentUser) {
+                updateProfileImages(getProfileUrl(auth.currentUser));
             }
-            
-            // Firebase Auth caches the photoURL. If it was updated recently, 
-            // the cache might still have the old one. We silently reload the user to get the latest.
-            user.reload().then(() => {
-                if (auth.currentUser && auth.currentUser.photoURL) {
-                    profileImage.src = auth.currentUser.photoURL;
-                }
-            }).catch(e => console.error("Profile reload failed", e));
-        }
+        }).catch(e => console.error("Profile reload failed", e));
 
     } else {
         console.log("User is not authenticated");
