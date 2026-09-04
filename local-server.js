@@ -164,9 +164,39 @@ function parsePDFTextFallback(extractedText) {
     };
 }
 
+// Rate Limiting Config
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 5; // Max 5 requests per minute per IP
+const requestCounts = new Map();
+
+function isRateLimited(ip) {
+    const now = Date.now();
+    let clientData = requestCounts.get(ip);
+    
+    if (!clientData) {
+        requestCounts.set(ip, { count: 1, startTime: now });
+        return false;
+    }
+    
+    if (now - clientData.startTime < RATE_LIMIT_WINDOW_MS) {
+        clientData.count++;
+        return clientData.count > MAX_REQUESTS_PER_WINDOW;
+    } else {
+        clientData.count = 1;
+        clientData.startTime = now;
+        return false;
+    }
+}
+
 const server = http.createServer(async (req, res) => {
     // API Route: Extract PDF Quotation
     if (req.method === 'POST' && req.url === '/api/extract-pdf-quotation') {
+        const clientIp = req.socket?.remoteAddress || 'unknown';
+        if (isRateLimited(clientIp)) {
+            res.writeHead(429, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ success: false, error: 'Too many requests. Please wait a minute before trying again.' }));
+        }
+
         const chunks = [];
         let totalSize = 0;
 

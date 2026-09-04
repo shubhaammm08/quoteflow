@@ -1,3 +1,64 @@
+// Initialize dark mode
+if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+  document.documentElement.classList.add('dark');
+} else {
+  document.documentElement.classList.remove('dark');
+}
+
+window.toggleDarkMode = function() {
+    if (document.documentElement.classList.contains('dark')) {
+        document.documentElement.classList.remove('dark');
+        localStorage.theme = 'light';
+    } else {
+        document.documentElement.classList.add('dark');
+        localStorage.theme = 'dark';
+    }
+}
+
+// Inject global Dark Mode styles for a premium, polished aesthetic
+const darkModeStyle = document.createElement('style');
+darkModeStyle.textContent = `
+  /* Deep, rich background for the body */
+  .dark body { background-color: #0B0F19 !important; color: #F3F4F6 !important; }
+  
+  /* Elevated panels and cards */
+  .dark .bg-white { background-color: #111827 !important; }
+  .dark .bg-gray-50 { background-color: #0B0F19 !important; }
+  .dark .bg-gray-100 { background-color: #1F2937 !important; }
+  
+  /* Subtle borders for depth */
+  .dark .border-gray-100, .dark .border-gray-200 { border-color: #1F2937 !important; }
+  
+  /* Crisp typography */
+  .dark .text-gray-900, .dark .text-gray-800 { color: #F9FAFB !important; }
+  .dark .text-gray-700, .dark .text-gray-600 { color: #D1D5DB !important; }
+  .dark .text-gray-500 { color: #9CA3AF !important; }
+  
+  /* Form inputs */
+  .dark input, .dark textarea, .dark select { 
+      background-color: #1F2937 !important; 
+      border-color: #374151 !important; 
+      color: #F9FAFB !important; 
+  }
+  .dark input:focus, .dark textarea:focus, .dark select:focus {
+      border-color: #6366F1 !important; /* Indigo ring */
+  }
+  
+  /* Flatten aggressive shadows in dark mode for a cleaner look */
+  .dark .shadow-sm, .dark .shadow-md, .dark .shadow-lg, .dark .shadow-xl { 
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3) !important; 
+  }
+  
+  /* Header transparency */
+  .dark header { 
+      background-color: rgba(17, 24, 39, 0.85) !important; 
+      border-bottom-color: #1F2937 !important;
+  }
+`;
+document.head.appendChild(darkModeStyle);
+
+
+
 tailwind.config = {
     darkMode: "class",
     theme: {

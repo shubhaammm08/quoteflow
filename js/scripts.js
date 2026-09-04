@@ -1357,22 +1357,145 @@ ${textarea.value}`;
             });
         }
 
-        // Download PDF button
-        const downloadBtn = document.getElementById('download-btn');
-        const successMsg = document.getElementById('success-message');
-        if (downloadBtn) {
-            downloadBtn.addEventListener('click', () => {
-                const orig = downloadBtn.innerHTML;
-                downloadBtn.innerHTML = '<span class="material-symbols-outlined text-[18px] animate-spin">refresh</span> Processing...';
-                downloadBtn.disabled = true;
-                setTimeout(() => {
-                    downloadBtn.innerHTML = orig;
-                    downloadBtn.disabled = false;
-                    if (successMsg) successMsg.classList.remove('hidden');
-                    window.print();
-                }, 1000);
+        // Save Quote Button
+        const saveQuoteBtn = document.getElementById('save-quote-btn');
+        if (saveQuoteBtn) {
+            saveQuoteBtn.addEventListener('click', async () => {
+                const orig = saveQuoteBtn.innerHTML;
+                saveQuoteBtn.innerHTML = '<span class="material-symbols-outlined text-[18px] animate-spin">refresh</span> Saving...';
+                saveQuoteBtn.disabled = true;
+                
+                try {
+                    const success = await window.saveQuoteToCloud(currentState);
+                    if (success) {
+                        showToast('Quote saved to cloud successfully!', 'cloud_done');
+                        saveQuoteBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">check</span> Saved';
+                        saveQuoteBtn.classList.replace('bg-emerald-600', 'bg-gray-400');
+                    } else {
+                        throw new Error('Failed to save');
+                    }
+                } catch (e) {
+                    saveQuoteBtn.innerHTML = orig;
+                    saveQuoteBtn.disabled = false;
+                    showToast('Failed to save quote. Are you logged in?', 'error');
+                }
             });
         }
+
+        // Download PDF buttons (both top toolbar and bottom)
+        const downloadBtns = [document.getElementById('download-btn'), document.getElementById('download-pdf-btn')];
+        const successMsg = document.getElementById('success-message');
+        
+        downloadBtns.forEach(btn => {
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    const orig = btn.innerHTML;
+                    btn.innerHTML = '<span class="material-symbols-outlined text-[18px] animate-spin">refresh</span> Generating...';
+                    btn.disabled = true;
+
+                    // Select the invoice container
+                    const element = document.getElementById('pdf-content') || document.querySelector('main > div > section');
+                    
+                    if (element && typeof html2pdf !== 'undefined') {
+                        const opt = {
+                            margin:       0.5,
+                            filename:     `Quotation_${currentState.quotationInfo.no || 'New'}.pdf`,
+                            image:        { type: 'jpeg', quality: 0.98 },
+                            html2canvas:  { scale: 2, useCORS: true },
+                            jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+                        };
+
+                        html2pdf().set(opt).from(element).save().then(() => {
+                            btn.innerHTML = orig;
+                            btn.disabled = false;
+                            if (successMsg) successMsg.classList.remove('hidden');
+                            showToast('PDF Generated Successfully!', 'check_circle');
+                        }).catch(err => {
+                            console.error('PDF Generation Error:', err);
+                            btn.innerHTML = orig;
+                            btn.disabled = false;
+                            showToast('Failed to generate PDF.', 'error');
+                        });
+                    } else {
+                        // Fallback
+                        btn.innerHTML = orig;
+                        btn.disabled = false;
+                        window.print();
+                    }
+                });
+            }
+        });
     }
+
+    // --- Navigation Validation Guards ---
+    const allLinks = document.querySelectorAll('a[href]');
+    allLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            const href = link.getAttribute('href');
+            
+            // Validation for navigating to Step 2
+            if (href.includes('Step_2_Review_Details.html')) {
+                const state = getState();
+                const isStep1 = window.location.pathname.includes('QuoteFlow_AI_Quotation_Builder') || window.location.pathname.includes('Step_1') || window.location.pathname === '/' || window.location.pathname.endsWith('/');
+                if (isStep1) {
+                    const textarea = document.querySelector('textarea');
+                    if ((!textarea || textarea.value.trim().length === 0) && (!state.rawInput)) {
+                        e.preventDefault();
+                        showToast('Please provide a quotation request or choose Enter Manually.', 'warning');
+                    }
+                }
+            }
+            
+            // Validation for navigating to Step 3
+            if (href.includes('Step_3_Summary_PDF.html')) {
+                // Since calculateTotals() is bound to the 'input' event on all fields, 
+                // getState() will accurately reflect the current DOM values.
+                const state = getState();
+                
+                if (!state.customerInfo || !state.customerInfo.companyName || state.customerInfo.companyName.trim() === '') {
+                    e.preventDefault();
+                    showToast('Company Name is required to proceed.', 'error');
+                    return;
+                }
+
+                if (!state.customerInfo.email || state.customerInfo.email.trim() === '') {
+                    e.preventDefault();
+                    showToast('Email Address is required to proceed.', 'error');
+                    return;
+                }
+
+                if (!state.customerInfo.phone || state.customerInfo.phone.trim() === '') {
+                    e.preventDefault();
+                    showToast('Phone Number is required to proceed.', 'error');
+                    return;
+                }
+
+                if (!state.customerInfo.gstin || state.customerInfo.gstin.trim() === '') {
+                    e.preventDefault();
+                    showToast('GSTIN is required to proceed.', 'error');
+                    return;
+                }
+                
+                if (!state.items || state.items.length === 0) {
+                    e.preventDefault();
+                    showToast('At least one item is required.', 'error');
+                    return;
+                }
+                
+                let hasValidItem = false;
+                for (const item of state.items) {
+                    if (item.description && item.description.trim() !== '' && item.total > 0) {
+                        hasValidItem = true;
+                        break;
+                    }
+                }
+                
+                if (!hasValidItem) {
+                    e.preventDefault();
+                    showToast('At least one item must have a description and a total > 0.', 'error');
+                }
+            }
+        });
+    });
 
 });

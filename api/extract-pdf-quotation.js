@@ -156,9 +156,38 @@ function parsePDFTextFallback(extractedText) {
     };
 }
 
+// Rate Limiting Config (In-Memory per instance)
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 5; // Max 5 requests per minute per IP
+const requestCounts = new Map();
+
+function isRateLimited(ip) {
+    const now = Date.now();
+    let clientData = requestCounts.get(ip);
+    
+    if (!clientData) {
+        requestCounts.set(ip, { count: 1, startTime: now });
+        return false;
+    }
+    
+    if (now - clientData.startTime < RATE_LIMIT_WINDOW_MS) {
+        clientData.count++;
+        return clientData.count > MAX_REQUESTS_PER_WINDOW;
+    } else {
+        clientData.count = 1;
+        clientData.startTime = now;
+        return false;
+    }
+}
+
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    const clientIp = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
+    if (isRateLimited(clientIp)) {
+        return res.status(429).json({ success: false, error: 'Too many requests. Please wait a minute before trying again.' });
     }
 
     const chunks = [];

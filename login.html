@@ -7,7 +7,7 @@
     <meta name="description" content="Login to QuoteFlow AI to access your dashboard.">
     <link rel="icon" type="image/x-icon" href="https://lh3.googleusercontent.com/aida-public/AB6AXuBz88-rWElaCZjsu-m4MYaSbNIzgb7I4UdKXGY-SrIoPFYn-sbIrIN2wEW29eZYPe-4X3mKwae_fSL_Xezd8mzvh2MKQiGIe8kkjo0yIZCFWe71SBmJtV2wqklTJbw7Rw-cjhf3oP58OXckVW3gQsuw0Q7O6t2CTlKIPuhPbd7hJCpYKhKWwpYccmmE0Aa4O68pERbuUGaS37Gd8BgQjDqab4TGQVoc1iVp9E0wD4TWnL8TakhjkUh_F9AR-wJkKm2w1A">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="tailwind-theme.js"></script>
+    <script src="js/tailwind-theme.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
@@ -59,11 +59,11 @@
     </div>
 
     <script type="module">
-        import { auth } from './firebase-config.js';
+        import { auth } from './js/firebase-config.js';
         import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         
         // Also import the auth listener so it handles redirects if already logged in
-        import './auth.js';
+        import './js/auth.js';
 
         let isSignUp = false;
         const form = document.getElementById('login-form');
