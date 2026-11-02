@@ -4,6 +4,8 @@
     "start": "node local-server.js"
   },
   "dependencies": {
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.38.3",
     "jsdom": "^30.0.1",
     "pdf-lib": "^1.17.1",
     "pdf-parse": "^1.1.1"

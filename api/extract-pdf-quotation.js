@@ -1,5 +1,7 @@
 const https = require('https');
 const pdfParse = require('pdf-parse');
+const { Redis } = require('@upstash/redis');
+const { Ratelimit } = require('@upstash/ratelimit');
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || 'YOUR_GEMINI_API_KEY';
 
@@ -156,12 +158,12 @@ function parsePDFTextFallback(extractedText) {
     };
 }
 
-// Rate Limiting Config (In-Memory per instance)
+// Rate Limiting Config (In-Memory per instance fallback)
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
 const MAX_REQUESTS_PER_WINDOW = 5; // Max 5 requests per minute per IP
 const requestCounts = new Map();
 
-function isRateLimited(ip) {
+function isRateLimitedInMemory(ip) {
     const now = Date.now();
     let clientData = requestCounts.get(ip);
     
@@ -180,13 +182,42 @@ function isRateLimited(ip) {
     }
 }
 
+// Setup Upstash Redis Rate Limiter if env vars are present
+let ratelimit = null;
+if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    const redis = new Redis({
+        url: process.env.UPSTASH_REDIS_REST_URL,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    });
+    ratelimit = new Ratelimit({
+        redis: redis,
+        limiter: Ratelimit.slidingWindow(5, "1 m"),
+        analytics: true,
+    });
+}
+
+async function checkRateLimit(ip) {
+    if (ratelimit) {
+        try {
+            const { success } = await ratelimit.limit(ip);
+            return !success; // If not success, it is rate limited
+        } catch (error) {
+            console.warn('Upstash rate limit error, falling back to in-memory:', error);
+            return isRateLimitedInMemory(ip);
+        }
+    } else {
+        return isRateLimitedInMemory(ip);
+    }
+}
+
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
     const clientIp = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
-    if (isRateLimited(clientIp)) {
+    const rateLimited = await checkRateLimit(clientIp);
+    if (rateLimited) {
         return res.status(429).json({ success: false, error: 'Too many requests. Please wait a minute before trying again.' });
     }
 
